@@ -1,0 +1,7 @@
+.vscode/*
+__pycache__/*
+venv/*
+client/.netlify/*
+client/node_modules/*
+.env
+Dockerfile
