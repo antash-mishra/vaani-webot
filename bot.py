@@ -40,9 +40,11 @@ from pipecat.pipeline.pipeline import Pipeline
 from pipecat.pipeline.runner import PipelineRunner
 from pipecat.pipeline.task import PipelineParams, PipelineTask
 from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
+from pipecat.frames.frames import Frame, TranscriptionFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.processors.frameworks.rtvi import RTVIConfig, RTVIObserver, RTVIProcessor
 from pipecat.services.elevenlabs import ElevenLabsTTSService
+from pipecat.services.azure import AzureSTTService
 from pipecat.services.cerebras import CerebrasLLMService
 from pipecat.services.openai import OpenAILLMService, BaseOpenAILLMService
 from pipecat.processors.audio.vad.silero import SileroVAD, VADParams
@@ -105,6 +107,13 @@ logger.add(sys.stderr, level="DEBUG")
 
 #         await self.push_frame(frame, direction)
 
+class TranscriptionLogger(FrameProcessor):
+    async def process_frame(self, frame: Frame, direction: FrameDirection):
+        await super().process_frame(frame, direction)
+
+        if isinstance(frame, TranscriptionFrame):
+            print(f"Transcription: {frame.text}")
+
 
 async def main(room_url: str, token: str):
     """Main bot execution function.
@@ -125,15 +134,23 @@ async def main(room_url: str, token: str):
             audio_out_enabled=True,
             vad_enabled=True,
             vad_analyzer=SileroVADAnalyzer(),
-            transcription_enabled=True,
-            transcription_settings=DailyTranscriptionSettings(
-                language="hi",
-                model="nova-2-general",
-            ),
+            vad_audio_passthrough=True,
+            # transcription_settings=DailyTranscriptionSettings(
+            #     language="hi",
+            #     model="nova-2-general",
+            # ),
         ),
     )
-
-    vad = SileroVAD()
+    
+    stt = AzureSTTService(
+        api_key=os.getenv("AZURE_SPEECH_API_KEY", ""),
+        region=os.getenv("AZURE_SPEECH_REGION", "centralindia"),
+        sample_rate=16000,
+        channels=1
+    )
+    
+    # tl = TranscriptionLogger()
+    # print("STT: ", stt.can_generate_metrics)
 
     # Initialize text-to-speech service
     tts = ElevenLabsTTSService(
@@ -193,8 +210,9 @@ async def main(room_url: str, token: str):
     pipeline = Pipeline(
         [
             transport.input(),
-            vad,
             rtvi,
+            stt,
+
             context_aggregator.user(),
             llm,
             tts,
