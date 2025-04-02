@@ -5,3 +5,4 @@ client/.netlify/*
 client/node_modules/*
 .env
 Dockerfile
+client/dist/*

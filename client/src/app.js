@@ -29,21 +29,41 @@ class ChatbotClient {
     this.rtviClient = null;
     this.setupDOMElements();
     this.setupEventListeners();
+    this.activeMode = 'chat'; // Default mode is chat
   }
 
   /**
    * Set up references to DOM elements and create necessary media elements
    */
   setupDOMElements() {
+
+    // Mode toggle elements
+    this.chatModeBtn = document.getElementById('chat-mode-btn');
+    this.voiceModeBtn = document.getElementById('voice-mode-btn');
+    this.chatUI = document.getElementById('chat-ui');
+    this.voiceUI = document.getElementById('voice-ui');
+    
+    // Chat UI elements
+    this.chatMessages = document.getElementById('chat-messages');
+    this.userInput = document.getElementById('user-input');
+    this.sendBtn = document.getElementById('send-btn');
+    
+
     // Get references to UI control elements
     this.connectBtn = document.getElementById('connect-btn');
     this.disconnectBtn = document.getElementById('disconnect-btn');
     this.statusSpan = document.getElementById('connection-status');
-    this.debugLog = document.getElementById('debug-log');
-    this.botVideoContainer = document.getElementById('bot-video-container');
+    this.voiceConversation = document.getElementById('voice-conversation');
+    // this.botVideoContainer = document.getElementById('bot-video-container');
 
-    // Create an audio element for bot's voice output
+    // Debug elements
+    this.debugLog = document.getElementById('debug-log');
+    this.toggleDebugBtn = document.getElementById('toggle-debug');
+
+
+    // Create audio element for bot's voice output
     this.botAudio = document.createElement('audio');
+    this.botAudio.id = 'bot-audio';
     this.botAudio.autoplay = true;
     this.botAudio.playsInline = true;
     document.body.appendChild(this.botAudio);
@@ -53,8 +73,198 @@ class ChatbotClient {
    * Set up event listeners for connect/disconnect buttons
    */
   setupEventListeners() {
+    // Mode toggle
+    this.chatModeBtn.addEventListener('click', () => this.switchMode('chat'));
+    this.voiceModeBtn.addEventListener('click', () => this.switchMode('voice'));
+    
+    // Chat UI
+    this.sendBtn.addEventListener('click', () => this.sendChatMessage());
+    this.userInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        this.sendChatMessage();
+      }
+      
+      // Auto-resize the textarea
+      setTimeout(() => {
+        this.userInput.style.height = 'auto';
+        this.userInput.style.height = Math.min(this.userInput.scrollHeight, 120) + 'px';
+      }, 0);
+    });
+    
+    // Voice UI
     this.connectBtn.addEventListener('click', () => this.connect());
     this.disconnectBtn.addEventListener('click', () => this.disconnect());
+    
+    // Debug panel
+    this.toggleDebugBtn.addEventListener('click', () => {
+      const debugContent = document.querySelector('.debug-content');
+      const icon = this.toggleDebugBtn.querySelector('i');
+      debugContent.classList.toggle('collapsed');
+      icon.classList.toggle('fa-chevron-down');
+      icon.classList.toggle('fa-chevron-up');
+    });
+  }
+
+  /**
+ * Switch between chat and voice modes
+ */
+  switchMode(mode) {
+    if (mode === this.activeMode) return;
+    
+    this.activeMode = mode;
+    
+    if (mode === 'chat') {
+      this.chatModeBtn.classList.add('active');
+      this.voiceModeBtn.classList.remove('active');
+      this.chatUI.classList.remove('hidden');
+      this.voiceUI.classList.add('hidden');
+      
+      // Disconnect voice connection if active
+      if (this.rtviClient) {
+        this.disconnect();
+      }
+    } else {
+      this.chatModeBtn.classList.remove('active');
+      this.voiceModeBtn.classList.add('active');
+      this.chatUI.classList.add('hidden');
+      this.voiceUI.classList.remove('hidden');
+    }
+    
+    this.log(`Switched to ${mode} mode`);
+  }
+  
+  async sendChatMessage() {
+    const message = this.userInput.value.trim();
+    if (!message) return;
+    
+    // Add user message to chat
+    this.addChatMessage(message, 'user');
+    
+    // Clear input
+    this.userInput.value = '';
+    this.userInput.style.height = 'auto';
+    this.sendBtn.disabled = true;
+    
+    try {
+      // Log the message
+      this.log(`User: ${message}`);
+      
+      // Here you would typically send the message to your API
+      // For demonstration, we'll simulate a response
+      
+      // Simulate typing indicator
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'message bot typing';
+      typingIndicator.innerHTML = `
+        <div class="message-content">
+          <div class="typing-indicator">
+            <span></span><span></span><span></span>
+          </div>
+        </div>
+      `;
+      this.chatMessages.appendChild(typingIndicator);
+      this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+      
+      // Simulate response delay
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Remove typing indicator
+      this.chatMessages.removeChild(typingIndicator);
+      
+      // Sample response (in a real app, this would come from your backend)
+      const botResponse = "I'm a demo assistant. In a real implementation, I would connect to your backend API to process messages and generate responses.";
+      
+      // Add bot message to chat
+      this.addChatMessage(botResponse, 'bot');
+      this.log(`Bot: ${botResponse}`);
+    } catch (error) {
+      this.log(`Error sending message: ${error.message}`);
+      this.addChatMessage("Sorry, there was an error processing your request.", 'bot');
+    } finally {
+      this.sendBtn.disabled = false;
+    }
+  }
+
+  /**
+   * Add a message to the chat UI
+   */
+  addChatMessage(text, sender) {
+    const messageDiv = document.createElement('div');
+    messageDiv.className = `message ${sender}`;
+    
+    const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    
+    messageDiv.innerHTML = `
+      <div class="message-content">
+        <p>${this.escapeHTML(text)}</p>
+      </div>
+      <div class="message-timestamp">${time}</div>
+    `;
+    
+    this.chatMessages.appendChild(messageDiv);
+    this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
+  }
+
+  /**
+   * Add a transcript to the voice conversation UI
+   */
+  addTranscript(text, sender) {
+    // Remove placeholder if present
+    const placeholder = this.voiceConversation.querySelector('.conversation-placeholder');
+    if (placeholder) {
+      this.voiceConversation.removeChild(placeholder);
+    }
+    
+    const transcriptDiv = document.createElement('div');
+    transcriptDiv.className = `transcript ${sender}`;
+    transcriptDiv.textContent = text;
+    
+    this.voiceConversation.appendChild(transcriptDiv);
+    this.voiceConversation.scrollTop = this.voiceConversation.scrollHeight;
+    
+    // If it's a bot transcript, show the speaking indicator briefly
+    if (sender === 'bot') {
+      this.showBotSpeakingIndicator();
+    }
+  }  
+
+
+  /**
+   * Show bot speaking indicator
+   */
+  showBotSpeakingIndicator() {
+    const indicator = document.getElementById('bot-speaking-indicator');
+    if (!indicator) {
+      // Create the indicator if it doesn't exist
+      const voiceContent = document.querySelector('.voice-content');
+      const newIndicator = document.createElement('div');
+      newIndicator.id = 'bot-speaking-indicator';
+      newIndicator.className = 'bot-speaking-indicator';
+      newIndicator.innerHTML = `
+        <i class="fas fa-volume-up pulse"></i>
+        <span>Bot is speaking...</span>
+      `;
+      voiceContent.insertBefore(newIndicator, voiceContent.firstChild);
+      indicator = newIndicator;
+    }
+
+    // Show the indicator
+    indicator.classList.remove('hidden');
+
+    // Hide after a delay (adjust based on typical bot response duration)
+    setTimeout(() => {
+      indicator.classList.add('hidden');
+    }, 3000);
+  }
+
+  /**
+ * Escape HTML to prevent XSS
+ */
+  escapeHTML(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   /**
@@ -98,9 +308,6 @@ class ChatbotClient {
     if (tracks.bot?.audio) {
       this.setupAudioTrack(tracks.bot.audio);
     }
-    if (tracks.bot?.video) {
-      this.setupVideoTrack(tracks.bot.video);
-    }
   }
 
   /**
@@ -116,8 +323,6 @@ class ChatbotClient {
       if (!participant?.local) {
         if (track.kind === 'audio') {
           this.setupAudioTrack(track);
-        } else if (track.kind === 'video') {
-          this.setupVideoTrack(track);
         }
       }
     });
@@ -148,34 +353,6 @@ class ChatbotClient {
   }
 
   /**
-   * Set up a video track for display
-   * Handles both initial setup and track updates
-   */
-  setupVideoTrack(track) {
-    this.log('Setting up video track');
-    const videoEl = document.createElement('video');
-    videoEl.autoplay = true;
-    videoEl.playsInline = true;
-    videoEl.muted = true;
-    videoEl.style.width = '100%';
-    videoEl.style.height = '100%';
-    videoEl.style.objectFit = 'cover';
-
-    // Check if we're already displaying this track
-    if (this.botVideoContainer.querySelector('video')?.srcObject) {
-      const oldTrack = this.botVideoContainer
-        .querySelector('video')
-        .srcObject.getVideoTracks()[0];
-      if (oldTrack?.id === track.id) return;
-    }
-
-    // Create a new MediaStream with the track and set it as the video source
-    videoEl.srcObject = new MediaStream([track]);
-    this.botVideoContainer.innerHTML = '';
-    this.botVideoContainer.appendChild(videoEl);
-  }
-
-  /**
    * Initialize and connect to the bot
    * This sets up the RTVI client, initializes devices, and establishes the connection
    */
@@ -189,7 +366,7 @@ class ChatbotClient {
         transport,
         params: {
           // The baseURL and endpoint of your bot server that the client will connect to
-          baseUrl: 'http://localhost:7860',
+          baseUrl: 'https://vaani-webrtc.fly.dev',
           endpoints: {
             connect: '/',
           },
@@ -220,6 +397,7 @@ class ChatbotClient {
           },
           // Handle bot connection events
           onBotConnected: (participant) => {
+            this.showBotSpeakingIndicator();
             this.log(`Bot connected: ${JSON.stringify(participant)}`);
           },
           onBotDisconnected: (participant) => {
@@ -234,10 +412,12 @@ class ChatbotClient {
             // Only log final transcripts
             if (data.final) {
               this.log(`User: ${data.text}`);
+              this.addTranscript(data.text, 'user');
             }
           },
           onBotTranscript: (data) => {
             this.log(`Bot: ${data.text}`);
+            this.addTranscript(data.text, 'bot');
           },
           // Error handling
           onMessageError: (error) => {
@@ -279,6 +459,37 @@ class ChatbotClient {
   }
 
   /**
+   * Clear transcript history and reset to placeholder
+   */
+  clearTranscriptHistory() {
+    // Clear the transcript area
+    if (this.voiceConversation) {
+      // Reset to placeholder content
+      this.voiceConversation.innerHTML = `
+        <div class="conversation-placeholder">
+          <i class="fas fa-comment-dots"></i>
+          <p>Conversation will appear here</p>
+        </div>
+      `;
+    }
+    
+    // Hide any speaking indicators
+    const indicator = document.getElementById('bot-speaking-indicator');
+    if (indicator) {
+      indicator.classList.add('hidden');
+    }
+    
+    // Reset interaction hint
+    const interactionHint = document.querySelector('.interaction-hint');
+    if (interactionHint) {
+      interactionHint.classList.remove('listening-paused');
+      interactionHint.querySelector('p').textContent = 'Speak to interact with the assistant';
+    }
+    
+    this.log('Transcript history cleared');
+  }
+
+  /**
    * Disconnect from the bot and clean up media resources
    */
   async disconnect() {
@@ -294,13 +505,17 @@ class ChatbotClient {
           this.botAudio.srcObject = null;
         }
 
-        // Clean up video
-        if (this.botVideoContainer.querySelector('video')?.srcObject) {
-          const video = this.botVideoContainer.querySelector('video');
-          video.srcObject.getTracks().forEach((track) => track.stop());
-          video.srcObject = null;
-        }
-        this.botVideoContainer.innerHTML = '';
+        // Clear the transcript history
+        this.clearTranscriptHistory();
+
+
+        // // Clean up video
+        // if (this.botVideoContainer.querySelector('video')?.srcObject) {
+        //   const video = this.botVideoContainer.querySelector('video');
+        //   video.srcObject.getTracks().forEach((track) => track.stop());
+        //   video.srcObject = null;
+        // }
+        // this.botVideoContainer.innerHTML = '';
       } catch (error) {
         this.log(`Error disconnecting: ${error.message}`);
       }
@@ -312,3 +527,7 @@ class ChatbotClient {
 window.addEventListener('DOMContentLoaded', () => {
   new ChatbotClient();
 });
+
+
+// Expose for embedding purposes
+window.ChatbotClient = ChatbotClient;

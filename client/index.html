@@ -1,40 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI Chatbot</title>
+  <title>Vaani Assistant</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/src/style.css">
 </head>
 
 <body>
-  <div class="container">
-    <div class="status-bar">
-      <div class="status">
-        Status: <span id="connection-status">Disconnected</span>
+  <div class="assistant-widget" id="ai-assistant-widget">
+    <div class="assistant-header">
+      <div class="logo">
+        <i class="fas fa-robot"></i>
+        <h1>Vaani Assistant</h1>
       </div>
-      <div class="controls">
-        <button id="connect-btn">Connect</button>
-        <button id="disconnect-btn" disabled>Disconnect</button>
+      <div class="mode-toggle">
+        <button id="chat-mode-btn" class="mode-btn active" title="Chat Mode">
+          <i class="fas fa-comment"></i>
+        </button>
+        <button id="voice-mode-btn" class="mode-btn" title="Voice Mode">
+          <i class="fas fa-microphone"></i>
+        </button>
       </div>
     </div>
 
-    <div class="main-content">
-      <div class="bot-container">
-        <div id="bot-video-container">
+    <!-- Chat UI -->
+    <div id="chat-ui" class="assistant-content">
+      <div class="chat-messages" id="chat-messages">
+        <div class="message bot">
+          <div class="message-content">
+            <p>Hello! How can I help you today?</p>
+          </div>
         </div>
-        <audio id="bot-audio" autoplay></audio>
+      </div>
+      <div class="chat-input">
+        <textarea id="user-input" placeholder="Type your message..." rows="1"></textarea>
+        <button id="send-btn" class="send-btn">
+          <i class="fas fa-paper-plane"></i>
+        </button>
       </div>
     </div>
 
+    <!-- Voice UI -->
+    <!-- Voice UI -->
+    <div id="voice-ui" class="assistant-content hidden">
+      <div class="connection-status">
+        <div class="status-indicator">
+          <span class="status-dot"></span>
+          <span id="connection-status">Disconnected</span>
+        </div>
+        <div class="controls">
+          <button id="connect-btn" class="btn connect-btn">
+            <i class="fas fa-plug"></i> Connect
+          </button>
+          <button id="disconnect-btn" class="btn disconnect-btn" disabled>
+            <i class="fas fa-times-circle"></i> Disconnect
+          </button>
+        </div>
+      </div>
+
+      <div class="voice-conversation" id="voice-conversation">
+        <!-- Voice transcripts will appear here -->
+        <div class="conversation-placeholder">
+          <i class="fas fa-comment-dots"></i>
+          <p>Conversation will appear here</p>
+        </div>
+      </div>
+
+      <div class="voice-content">
+        <div class="bot-speaking-indicator hidden" id="bot-speaking-indicator">
+          <i class="fas fa-volume-up pulse"></i>
+          <span>Bot is speaking...</span>
+        </div>
+        <div class="media-wrapper">
+          <audio id="bot-audio" autoplay></audio>
+        </div>
+        <div class="interaction-hint">
+          <i class="fas fa-microphone-alt pulse"></i>
+          <p>Speak to interact with the assistant</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Debug Panel (collapsible) -->
     <div class="debug-panel">
-      <h3>Debug Info</h3>
-      <div id="debug-log"></div>
+      <div class="debug-header">
+        <h3><i class="fas fa-terminal"></i> Debug Information</h3>
+        <button class="toggle-debug-btn" id="toggle-debug">
+          <i class="fas fa-chevron-down"></i>
+        </button>
+      </div>
+      <div class="debug-content collapsed">
+        <div id="debug-log"></div>
+      </div>
     </div>
   </div>
 
   <script type="module" src="/src/app.js"></script>
-  <link rel="stylesheet" href="/src/style.css">
 </body>
-
 </html>
