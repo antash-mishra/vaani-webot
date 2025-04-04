@@ -1,8 +1,8 @@
 :root {
   /* Color Variables */
-  --primary-color: #3a6df0;
-  --primary-light: #5886f2;
-  --primary-dark: #2954c8;
+  --primary-color: #119441;
+  --primary-light: #1ab454;
+  --primary-dark: #0e7a36;
   --success-color: #4caf50;
   --danger-color: #f44336;
   --warning-color: #ff9800;
@@ -67,6 +67,13 @@ body {
   padding: var(--spacing-md);
   background-color: var(--primary-color);
   color: white;
+  max-height: 60px;
+}
+
+.logo-image {
+  height: 42px;
+  width: auto;
+  margin-right: 8px;
 }
 
 .logo {
@@ -76,12 +83,14 @@ body {
 }
 
 .logo i {
-  font-size: 24px;
+  font-size: 26px;
 }
 
 .logo h1 {
-  font-size: 18px;
+  font-size: 22px;
   font-weight: 600;
+  font-family: 'Inter', sans-serif;
+
 }
 
 .mode-toggle {
