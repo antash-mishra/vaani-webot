@@ -71,9 +71,9 @@ body {
 }
 
 .logo-image {
-  height: 42px;
-  width: auto;
-  margin-right: 8px;
+  height: 45px;
+  width: 47px;
+  margin-right: 6px;
 }
 
 .logo {
@@ -229,7 +229,9 @@ body {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: var(--spacing-md);
+  padding-bottom: var(--spacing-sm);
+  padding-top: var(--spacing-sm);
+  padding-right: 15spx;
   border-bottom: 1px solid var(--border-color);
 }
 
