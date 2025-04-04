@@ -131,20 +131,14 @@ async def start_bot(request: Request) -> JSONResponse:
         pass
 
     # Use specified room URL, or create a new one if not specified
-    room_url = os.getenv("DAILY_ROOM_URL", "")
+    room_url = os.getenv("DAILY_ROOM_URL")
 
-    if not room_url:
-        params = DailyRoomParams(properties=DailyRoomProperties())
-        try:
-            room: DailyRoomObject = await daily_helpers["rest"].create_room(params=params)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=f"Unable to provision room {e}")
-    else:
-        # Check passed room URL exists, we should assume that it already has a sip set up
-        try:
-            room: DailyRoomObject = await daily_helpers["rest"].get_room_from_url(room_url)
-        except Exception:
-            raise HTTPException(status_code=500, detail=f"Room not found: {room_url}")
+    
+    # Check passed room URL exists, we should assume that it already has a sip set up
+    try:
+        room: DailyRoomObject = await daily_helpers["rest"].get_room_from_url(room_url)
+    except Exception:
+        raise HTTPException(status_code=500, detail=f"Room not found: {room_url}")
 
     # Give the agent a token to join the session
     token = await daily_helpers["rest"].get_token(room.url, MAX_SESSION_TIME)
