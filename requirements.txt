@@ -1,6 +1,6 @@
 python-dotenv
 fastapi[all]
 uvicorn
-pipecat-ai[daily,elevenlabs,openai,silero,cerebras,azure]
+pipecat-ai[daily,elevenlabs,openai,silero,cerebras,azure,noisereduce,koala]
 loguru
 onnxruntime

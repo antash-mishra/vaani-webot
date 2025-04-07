@@ -366,7 +366,7 @@ class ChatbotClient {
         transport,
         params: {
           // The baseURL and endpoint of your bot server that the client will connect to
-          baseUrl: 'https://vaani-webrtc.fly.dev',
+          baseUrl: 'http://localhost:7860',
           endpoints: {
             connect: '/',
           },

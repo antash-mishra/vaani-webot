@@ -44,6 +44,8 @@ from pipecat.frames.frames import Frame, TranscriptionFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.processors.frameworks.rtvi import RTVIConfig, RTVIObserver, RTVIProcessor
 from pipecat.services.elevenlabs import ElevenLabsTTSService
+from pipecat.audio.filters.noisereduce_filter import NoisereduceFilter
+from pipecat.audio.filters.koala_filter import KoalaFilter
 from pipecat.services.azure import AzureSTTService
 from pipecat.transcriptions.language import Language
 from pipecat.services.openai import BaseOpenAILLMService
@@ -78,6 +80,7 @@ async def main(room_url: str, token: str):
         token=token,
         bot_name="Chatbot",
         params=DailyParams(
+            audio_in_filter=KoalaFilter(access_key=os.getenv("KOALA_ACCESS_KEY")), # Enable noise reduction
             audio_out_enabled=True,
             vad_enabled=True,
             vad_analyzer=SileroVADAnalyzer(),
