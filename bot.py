@@ -28,7 +28,7 @@ from loguru import logger
 from PIL import Image
 from pathlib import Path
 
-from pipecat.audio.vad.silero import SileroVADAnalyzer
+from pipecat.audio.vad.silero import SileroVADAnalyzer, VADParams
 from pipecat.frames.frames import (
     BotStartedSpeakingFrame,
     BotStoppedSpeakingFrame,
@@ -45,6 +45,7 @@ from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.processors.frameworks.rtvi import RTVIConfig, RTVIObserver, RTVIProcessor
 from pipecat.services.elevenlabs import ElevenLabsTTSService
 from pipecat.audio.filters.noisereduce_filter import NoisereduceFilter
+from pipecat.services.openai import OpenAILLMService
 from pipecat.audio.filters.koala_filter import KoalaFilter
 from pipecat.services.azure import AzureSTTService
 from pipecat.transcriptions.language import Language
@@ -80,10 +81,21 @@ async def main(room_url: str, token: str):
         token=token,
         bot_name="Chatbot",
         params=DailyParams(
-            audio_in_filter=KoalaFilter(access_key=os.getenv("KOALA_ACCESS_KEY")), # Enable noise reduction
+            audio_in_filter=NoisereduceFilter(), # Enable noise reduction
             audio_out_enabled=True,
             vad_enabled=True,
-            vad_analyzer=SileroVADAnalyzer(),
+            # transcription_enabled=True,
+            vad_analyzer=SileroVADAnalyzer(
+                sample_rate=16000,
+                params=VADParams(
+                    threshold=0.5,
+                    confidence=0.5,
+                    start_secs=0.1,
+                    stop_secs=0.5,
+                    min_speech_duration_ms=250,
+                    min_silence_duration_ms=100
+                )
+            ),
             vad_audio_passthrough=True,
             # transcription_settings=DailyTranscriptionSettings(
             #     language="hi",
@@ -120,27 +132,27 @@ async def main(room_url: str, token: str):
     )
 
     # Initialize LLM service
-    # llm = OpenAILLMService(
-    #     api_key=os.getenv("OPENAI_API_KEY"), 
-    #     model="gpt-4o-mini", 
-    #     input_params=BaseOpenAILLMService.InputParams(
-    #         temperature=0.7,
-    #         max_tokens=800,
-    #         top_p=1,
-    #         frequency_penalty=0,
-    #         presence_penalty=0
-    #     )
-    # )
-    
-    llm = CerebrasLLMService(
-        api_key=os.getenv("CEREBRAS_API_KEY", ""),
-        model="llama-3.3-70b",
-        params=BaseOpenAILLMService.InputParams(
+    llm = OpenAILLMService(
+        api_key=os.getenv("OPENAI_API_KEY"), 
+        model="gpt-4o-mini",
+        input_params=BaseOpenAILLMService.InputParams(
             temperature=0.7,
-            max_completion_tokens=250,  # Set your desired max token limit here
-            top_p=1.0,
+            max_tokens=800,
+            top_p=1,
+            frequency_penalty=0,
+            presence_penalty=0
         )
     )
+    
+    # llm = CerebrasLLMService(
+        # api_key=os.getenv("CEREBRAS_API_KEY", ""),
+        # model="llama-3.3-70b",
+        # params=BaseOpenAILLMService.InputParams(
+            # temperature=0.7,
+            # max_completion_tokens=250,  # Set your desired max token limit here
+            # top_p=1.0,
+        # )
+    # )
 
 
     messages = [
