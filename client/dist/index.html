@@ -8,8 +8,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-  <script type="module" crossorigin src="./assets/app-DD5mb3VI.js"></script>
-  <link rel="stylesheet" crossorigin href="./assets/app-D92lJ-AG.css">
+  <script type="module" crossorigin src="./assets/app-CusO4GJM.js"></script>
+  <link rel="stylesheet" crossorigin href="./assets/app-Ctg5c-vA.css">
 </head>
 
 <body>
@@ -34,19 +34,20 @@
       <div class="chat-messages" id="chat-messages">
         <div class="message bot">
           <div class="message-content">
-            <p>Hello! How can I help you today?</p>
+            <p>नमस्ते! मैं आपकी कैसे सहायता कर सकता/सकती हूं?</p>
           </div>
         </div>
       </div>
+      
+      <!-- Update the chat input placeholder -->
       <div class="chat-input">
-        <textarea id="user-input" placeholder="Type your message..." rows="1"></textarea>
+        <textarea id="user-input" placeholder="अपना संदेश यहाँ टाइप करें..." rows="1"></textarea>
         <button id="send-btn" class="send-btn">
           <i class="fas fa-paper-plane"></i>
         </button>
       </div>
     </div>
 
-    <!-- Voice UI -->
     <!-- Voice UI -->
     <div id="voice-ui" class="assistant-content hidden">
       <div class="connection-status">
@@ -56,14 +57,14 @@
         </div>
         <div class="controls">
           <button id="connect-btn" class="btn connect-btn">
-            <i class="fas fa-plug"></i> Connect
+            <i class="fas fa-plug"></i>
           </button>
           <button id="disconnect-btn" class="btn disconnect-btn" disabled>
-            <i class="fas fa-times"></i> Disconnect
+            <i class="fas fa-times-circle"></i>
           </button>
           <button id="toggleMute" class="btn mute-btn">
             <i class="fas fa-microphone"></i> Mute Mic
-          </button>        
+          </button>
         </div>
       </div>
 

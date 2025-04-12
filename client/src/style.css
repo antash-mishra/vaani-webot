@@ -38,7 +38,7 @@
 body {
   margin: 0;
   padding: 0;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', 'Noto Sans Devanagari', sans-serif;
   background-color: var(--background-color);
   color: var(--text-color);
   line-height: 1.6;
@@ -174,31 +174,32 @@ body {
   align-self: flex-end;
 }
 
-.chat-input {
-  display: flex;
-  align-items: center;
-  gap: var(--spacing-sm);
-  padding: var(--spacing-md);
-  border-top: 1px solid var(--border-color);
-  background-color: white;
-}
-
 #user-input {
-  flex: 1;
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-md);
-  padding: var(--spacing-sm) var(--spacing-md);
-  font-family: 'Inter', sans-serif;
-  resize: none;
-  font-size: 14px;
-  line-height: 1.5;
+  min-height: 40px;
   max-height: 120px;
-  transition: border-color 0.2s;
+  padding: 10px;
+  resize: none;
+  overflow-y: hidden; /* Hide the scrollbar */
+  line-height: 1.5;
+  box-sizing: border-box;
+  width: 100%;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 14px;
 }
 
 #user-input:focus {
   outline: none;
-  border-color: var(--primary-light);
+  border-color: #007bff;
+}
+
+.chat-input {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  background: #fff;
+  border-top: 1px solid #eee;
 }
 
 .send-btn {
@@ -653,7 +654,6 @@ button:disabled {
   transform: scale(1.05);
   background-color: var(--primary-dark);
 }
-
 
 .mute-btn {
   background-color: #6c757d;

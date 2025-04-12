@@ -82,6 +82,15 @@ class ChatbotClient {
     
     // Chat UI
     this.sendBtn.addEventListener('click', () => this.sendChatMessage());
+
+    // Update the textarea resize logic
+    this.userInput.addEventListener('input', () => {
+      // Reset height to auto first to get the correct scrollHeight
+      this.userInput.style.height = 'auto';
+      // Set the height to scrollHeight
+      this.userInput.style.height = `${this.userInput.scrollHeight}px`;
+    });
+    
     this.userInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' && !e.shiftKey) {
         e.preventDefault();
@@ -162,7 +171,7 @@ class ChatbotClient {
     // Add user message to chat
     this.addChatMessage(message, 'user');
     
-    // Clear input
+    // Clear input and disable send button
     this.userInput.value = '';
     this.userInput.style.height = 'auto';
     this.sendBtn.disabled = true;
@@ -171,10 +180,7 @@ class ChatbotClient {
       // Log the message
       this.log(`User: ${message}`);
       
-      // Here you would typically send the message to your API
-      // For demonstration, we'll simulate a response
-      
-      // Simulate typing indicator
+      // Show typing indicator
       const typingIndicator = document.createElement('div');
       typingIndicator.className = 'message bot typing';
       typingIndicator.innerHTML = `
@@ -187,21 +193,31 @@ class ChatbotClient {
       this.chatMessages.appendChild(typingIndicator);
       this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       
-      // Simulate response delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      // Make API call to the chat endpoint
+      const response = await fetch('http://localhost:8000/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "user_message": message  })
+      });
+      
+      if (!response.ok) {
+        throw new Error('Network response was not ok');
+      }
+      
+      const data = await response.json();
       
       // Remove typing indicator
       this.chatMessages.removeChild(typingIndicator);
       
-      // Sample response (in a real app, this would come from your backend)
-      const botResponse = "I'm a demo assistant. In a real implementation, I would connect to your backend API to process messages and generate responses.";
-      
       // Add bot message to chat
-      this.addChatMessage(botResponse, 'bot');
-      this.log(`Bot: ${botResponse}`);
+      this.addChatMessage(data.bot_response, 'bot');
+      this.log(`Bot: ${data.bot_response}`);
+      
     } catch (error) {
       this.log(`Error sending message: ${error.message}`);
-      this.addChatMessage("Sorry, there was an error processing your request.", 'bot');
+      this.addChatMessage("क्षमा करें, आपका संदेश प्रोसेस करने में कोई त्रुटि हुई है।", 'bot');
     } finally {
       this.sendBtn.disabled = false;
     }

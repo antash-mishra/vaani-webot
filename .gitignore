@@ -7,3 +7,4 @@ client/node_modules/*
 Dockerfile
 client/dist/
 client/dist/*
+krisp/
