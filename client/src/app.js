@@ -54,6 +54,9 @@ class ChatbotClient {
     this.disconnectBtn = document.getElementById('disconnect-btn');
     this.statusSpan = document.getElementById('connection-status');
     this.voiceConversation = document.getElementById('voice-conversation');
+    // Add mute button reference
+    this.muteBtn = document.getElementById('toggleMute');
+
     // this.botVideoContainer = document.getElementById('bot-video-container');
 
     // Debug elements
@@ -95,6 +98,24 @@ class ChatbotClient {
     // Voice UI
     this.connectBtn.addEventListener('click', () => this.connect());
     this.disconnectBtn.addEventListener('click', () => this.disconnect());
+
+
+    // Add mute button listener
+    this.muteBtn.addEventListener('click', () => {
+      if (this.rtviClient) {
+        const isMicEnabled = this.rtviClient.isMicEnabled;
+        this.rtviClient.enableMic(!isMicEnabled);
+
+        // Update button text and icon
+        this.muteBtn.innerHTML = `
+          <i class="fas fa-microphone${!isMicEnabled ? '' : '-slash'}"></i>
+          ${!isMicEnabled ? 'Mute Mic' : 'Unmute Mic'}
+        `;
+
+        this.log(`Microphone ${!isMicEnabled ? 'enabled' : 'disabled'}`);
+      }
+    });
+
     
     // Debug panel
     this.toggleDebugBtn.addEventListener('click', () => {
@@ -366,7 +387,8 @@ class ChatbotClient {
         transport,
         params: {
           // The baseURL and endpoint of your bot server that the client will connect to
-          baseUrl: 'http://localhost:7860',
+          // baseUrl: 'https://53e1-2401-4900-1cba-e8a9-9969-83b9-3b36-913b.ngrok-free.app',
+          baseUrl: 'https://2f21-122-171-18-250.ngrok-free.app',
           endpoints: {
             connect: '/',
           },
@@ -379,6 +401,7 @@ class ChatbotClient {
             this.updateStatus('Connected');
             this.connectBtn.disabled = true;
             this.disconnectBtn.disabled = false;
+            this.muteBtn.disabled = false; // Enable mute button
             this.log('Client connected');
           },
           onDisconnected: () => {
@@ -498,6 +521,12 @@ class ChatbotClient {
         // Disconnect the RTVI client
         await this.rtviClient.disconnect();
         this.rtviClient = null;
+
+        // Reset mute button state
+        this.muteBtn.disabled = true;
+        this.muteBtn.innerHTML = `
+          <i class="fas fa-microphone"></i> Mute Mic
+        `;
 
         // Clean up audio
         if (this.botAudio.srcObject) {

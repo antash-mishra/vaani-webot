@@ -653,3 +653,27 @@ button:disabled {
   transform: scale(1.05);
   background-color: var(--primary-dark);
 }
+
+
+.mute-btn {
+  background-color: #6c757d;
+  color: white;
+}
+
+.mute-btn:hover {
+  background-color: #5a6268;
+}
+
+.mute-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* When mic is muted */
+.mute-btn[data-muted="true"] {
+  background-color: var(--danger-color);
+}
+
+.mute-btn[data-muted="true"]:hover {
+  background-color: #d32f2f;
+}
