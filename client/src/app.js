@@ -194,7 +194,7 @@ class ChatbotClient {
       this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
       
       // Make API call to the chat endpoint
-      const response = await fetch('http://localhost:8000/chat', {
+      const response = await fetch('https://api.corrodedlabs.com/chat', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
