@@ -43,14 +43,14 @@ from pipecat.processors.aggregators.openai_llm_context import OpenAILLMContext
 from pipecat.frames.frames import Frame, TranscriptionFrame
 from pipecat.processors.frame_processor import FrameDirection, FrameProcessor
 from pipecat.processors.frameworks.rtvi import RTVIConfig, RTVIObserver, RTVIProcessor
-from pipecat.services.elevenlabs import ElevenLabsTTSService
+from pipecat.services.elevenlabs.tts import ElevenLabsTTSService
 from pipecat.audio.filters.noisereduce_filter import NoisereduceFilter
-from pipecat.services.openai import OpenAILLMService
+from pipecat.services.openai.llm import OpenAILLMService
 from pipecat.audio.filters.koala_filter import KoalaFilter
-from pipecat.services.azure import AzureSTTService
+from pipecat.services.azure.stt import AzureSTTService
 from pipecat.transcriptions.language import Language
-from pipecat.services.openai import BaseOpenAILLMService
-from pipecat.services.cerebras import CerebrasLLMService
+from pipecat.services.openai.base_llm import BaseOpenAILLMService
+from pipecat.services.cerebras.llm import CerebrasLLMService
 from pipecat.transports.services.daily import DailyParams, DailyTransport
 
 load_dotenv(override=True)
@@ -81,7 +81,8 @@ async def main(room_url: str, token: str):
         token=token,
         bot_name="Chatbot",
         params=DailyParams(
-            audio_in_filter=NoisereduceFilter(), # Enable noise reduction
+            audio_in_filter=KoalaFilter(access_key=os.getenv("KOALA_ACCESS_KEY", "")), # Enable noise reduction
+            # audio_in_enabled=True,
             audio_out_enabled=True,
             vad_enabled=True,
             # transcription_enabled=True,
@@ -89,14 +90,14 @@ async def main(room_url: str, token: str):
                 sample_rate=16000,
                 params=VADParams(
                     threshold=0.5,
-                    confidence=0.5,
+                    confidence=0.7,
                     start_secs=0.1,
                     stop_secs=0.5,
                     min_speech_duration_ms=250,
                     min_silence_duration_ms=100
                 )
             ),
-            vad_audio_passthrough=True,
+            vad_audio_passthrough=False,
             # transcription_settings=DailyTranscriptionSettings(
             #     language="hi",
             #     model="nova-2-general",
@@ -124,17 +125,18 @@ async def main(room_url: str, token: str):
         model="eleven_flash_v2_5",
         voice_id=os.getenv("ELEVENLABS_VOICE_ID", ""),
         params=ElevenLabsTTSService.InputParams(
-            stability=0.7,
+            stability=0.6,
             similarity_boost=0.8,
             style=0.5,
-            use_speaker_boost=False
+            use_speaker_boost=False,
+            
         )
     )
 
     # Initialize LLM service
     llm = OpenAILLMService(
         api_key=os.getenv("OPENAI_API_KEY"), 
-        model="gpt-4o-mini",
+        model="gpt-4o",
         input_params=BaseOpenAILLMService.InputParams(
             temperature=0.7,
             max_tokens=800,
@@ -197,6 +199,7 @@ async def main(room_url: str, token: str):
         ),
         observers=[RTVIObserver(rtvi)],
     )
+
 
     @rtvi.event_handler("on_client_ready")
     async def on_client_ready(rtvi):
