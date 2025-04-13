@@ -29,6 +29,7 @@ class ChatbotClient {
     this.rtviClient = null;
     this.setupDOMElements();
     this.setupEventListeners();
+    this.initializeClientAndTransport();
     this.activeMode = 'chat'; // Default mode is chat
   }
 
@@ -111,7 +112,6 @@ class ChatbotClient {
 
     // Add mute button listener
     this.muteBtn.addEventListener('click', () => {
-      if (this.rtviClient) {
         const isMicEnabled = this.rtviClient.isMicEnabled;
         this.rtviClient.enableMic(!isMicEnabled);
 
@@ -122,7 +122,6 @@ class ChatbotClient {
         `;
 
         this.log(`Microphone ${!isMicEnabled ? 'enabled' : 'disabled'}`);
-      }
     });
 
     
@@ -389,87 +388,87 @@ class ChatbotClient {
     this.botAudio.srcObject = new MediaStream([track]);
   }
 
+  // Initialize the RTVI client with our configuration
+  initializeClientAndTransport() {
+    this.rtviClient = new RTVIClient({
+      transport: new DailyTransport(),
+      params: {
+        // The baseURL and endpoint of your bot server that the client will connect to
+        // baseUrl: 'https://f224-2401-4900-1cb8-a9fd-9c10-15a4-598e-9049.ngrok-free.app',
+        baseUrl: 'https://rtc.corrodedlabs.com',
+        endpoints: {
+          connect: '/',
+        },
+      },
+      enableMic: true, // Enable microphone for user input
+      enableCam: false,
+      callbacks: {
+        // Handle connection state changes
+        onConnected: () => {
+          this.updateStatus('Connected');
+          this.connectBtn.disabled = true;
+          this.disconnectBtn.disabled = false;
+          this.muteBtn.disabled = false; // Enable mute button
+          this.log('Client connected');
+        },
+        onDisconnected: () => {
+          this.updateStatus('Disconnected');
+          this.connectBtn.disabled = false;
+          this.disconnectBtn.disabled = true;
+          this.log('Client disconnected');
+        },
+        // Handle transport state changes
+        onTransportStateChanged: (state) => {
+          this.updateStatus(`Transport: ${state}`);
+          this.log(`Transport state changed: ${state}`);
+          if (state === 'ready') {
+            this.setupMediaTracks();
+          }
+        },
+        // Handle bot connection events
+        onBotConnected: (participant) => {
+          this.showBotSpeakingIndicator();
+          this.log(`Bot connected: ${JSON.stringify(participant)}`);
+        },
+        onBotDisconnected: (participant) => {
+          this.log(`Bot disconnected: ${JSON.stringify(participant)}`);
+        },
+        onBotReady: (data) => {
+          this.log(`Bot ready: ${JSON.stringify(data)}`);
+          this.setupMediaTracks();
+        },
+        // Transcript events
+        onUserTranscript: (data) => {
+          // Only log final transcripts
+          if (data.final) {
+            this.log(`User: ${data.text}`);
+            this.addTranscript(data.text, 'user');
+          }
+        },
+        onBotTranscript: (data) => {
+          this.log(`Bot: ${data.text}`);
+          this.addTranscript(data.text, 'bot');
+        },
+        // Error handling
+        onMessageError: (error) => {
+          console.log('Message error:', error);
+        },
+        onError: (error) => {
+          console.log('Error:', error);
+        },
+      },
+    });
+
+    // Set up listeners for media track events
+    this.setupTrackListeners();
+  }
+
   /**
    * Initialize and connect to the bot
    * This sets up the RTVI client, initializes devices, and establishes the connection
    */
   async connect() {
     try {
-      // Create a new Daily transport for WebRTC communication
-      const transport = new DailyTransport();
-
-      // Initialize the RTVI client with our configuration
-      this.rtviClient = new RTVIClient({
-        transport,
-        params: {
-          // The baseURL and endpoint of your bot server that the client will connect to
-          // baseUrl: 'https://53e1-2401-4900-1cba-e8a9-9969-83b9-3b36-913b.ngrok-free.app',
-          baseUrl: 'https://2f21-122-171-18-250.ngrok-free.app',
-          endpoints: {
-            connect: '/',
-          },
-        },
-        enableMic: true, // Enable microphone for user input
-        enableCam: false,
-        callbacks: {
-          // Handle connection state changes
-          onConnected: () => {
-            this.updateStatus('Connected');
-            this.connectBtn.disabled = true;
-            this.disconnectBtn.disabled = false;
-            this.muteBtn.disabled = false; // Enable mute button
-            this.log('Client connected');
-          },
-          onDisconnected: () => {
-            this.updateStatus('Disconnected');
-            this.connectBtn.disabled = false;
-            this.disconnectBtn.disabled = true;
-            this.log('Client disconnected');
-          },
-          // Handle transport state changes
-          onTransportStateChanged: (state) => {
-            this.updateStatus(`Transport: ${state}`);
-            this.log(`Transport state changed: ${state}`);
-            if (state === 'ready') {
-              this.setupMediaTracks();
-            }
-          },
-          // Handle bot connection events
-          onBotConnected: (participant) => {
-            this.showBotSpeakingIndicator();
-            this.log(`Bot connected: ${JSON.stringify(participant)}`);
-          },
-          onBotDisconnected: (participant) => {
-            this.log(`Bot disconnected: ${JSON.stringify(participant)}`);
-          },
-          onBotReady: (data) => {
-            this.log(`Bot ready: ${JSON.stringify(data)}`);
-            this.setupMediaTracks();
-          },
-          // Transcript events
-          onUserTranscript: (data) => {
-            // Only log final transcripts
-            if (data.final) {
-              this.log(`User: ${data.text}`);
-              this.addTranscript(data.text, 'user');
-            }
-          },
-          onBotTranscript: (data) => {
-            this.log(`Bot: ${data.text}`);
-            this.addTranscript(data.text, 'bot');
-          },
-          // Error handling
-          onMessageError: (error) => {
-            console.log('Message error:', error);
-          },
-          onError: (error) => {
-            console.log('Error:', error);
-          },
-        },
-      });
-
-      // Set up listeners for media track events
-      this.setupTrackListeners();
 
       // Initialize audio/video devices
       this.log('Initializing devices...');
